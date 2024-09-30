@@ -19,7 +19,10 @@ import functools
 from bot.utils import logger
 from bot.exceptions import InvalidSession
 from .headers import headers
-
+from urllib.parse import parse_qs
+import json
+from .TLS import TLSv1_3_BYPASS
+import aiocfscrape
 
 def error_handler(func: Callable):
     @functools.wraps(func)
@@ -32,14 +35,50 @@ def error_handler(func: Callable):
 
 class Tapper:
     def __init__(self, tg_client: Client, proxy: str):
+
+
         self.tg_client = tg_client
-        self.session_name = tg_client.name
-        self.proxy = proxy
+        # Your query string
+        query_str = tg_client
+        # Parse the query string
+        parsed_data = parse_qs(query_str)
+
+        # Extracting each key and corresponding value
+        self.query_id = parsed_data.get('query_id', [''])[0]
+        user_str = parsed_data.get('user', [''])[0]
+        self.user_str = parsed_data.get('user', [''])[0]
+        self.auth_date = parsed_data.get('auth_date', [''])[0]
+        self.hash_value = parsed_data.get('hash', [''])[0]
+
+        # Decode the user field which is JSON encoded
+        user_data = json.loads(user_str)
+
+        # Extract user details
+        self.user_id = user_data.get('id')
+        self.first_name = user_data.get('first_name')
+        self.last_name = user_data.get('last_name')
+        self.language_code = user_data.get('language_code')
+        self.allows_write_to_pm = user_data.get('allows_write_to_pm')
+
+        self.session_name = self.first_name + " " + self.last_name
+
+        # Print each key-value pair
+        print(f"query_id: {self.query_id}")
+        print(f"user_id: {self.user_id}")
+        print(f"first_name: {self.first_name}")
+        print(f"last_name: {self.last_name}")
+        print(f"language_code: {self.language_code}")
+        print(f"allows_write_to_pm: {self.allows_write_to_pm}")
+        print(f"auth_date: {self.auth_date}")
+        print(f"hash: {self.hash_value}")
+
+
         self.tg_web_data = None
         self.tg_client_id = 0
+        self.proxy = proxy
         
     async def get_tg_web_data(self) -> str:
-        
+
         if self.proxy:
             proxy = Proxy.from_str(self.proxy)
             proxy_dict = dict(
@@ -52,57 +91,60 @@ class Tapper:
         else:
             proxy_dict = None
 
-        self.tg_client.proxy = proxy_dict
 
-        try:
-            if not self.tg_client.is_connected:
-                try:
-                    await self.tg_client.connect()
 
-                except (Unauthorized, UserDeactivated, AuthKeyUnregistered):
-                    raise InvalidSession(self.session_name)
+        # self.tg_client.proxy = proxy_dict
+
+        # try:
+        #     if not self.tg_client.is_connected:
+        #         try:
+        #             await self.tg_client.connect()
+
+        #         except (Unauthorized, UserDeactivated, AuthKeyUnregistered):
+        #             raise InvalidSession(self.session_name)
             
-            while True:
-                try:
-                    peer = await self.tg_client.resolve_peer('major')
-                    break
-                except FloodWait as fl:
-                    fls = fl.value
+        #     while True:
+        #         try:
+        #             peer = await self.tg_client.resolve_peer('major')
+        #             break
+        #         except FloodWait as fl:
+        #             fls = fl.value
 
-                    logger.warning(f"{self.session_name} | FloodWait {fl}")
-                    logger.info(f"{self.session_name} | Sleep {fls}s")
-                    await asyncio.sleep(fls + 3)
+        #             logger.warning(f"{self.session_name} | FloodWait {fl}")
+        #             logger.info(f"{self.session_name} | Sleep {fls}s")
+        #             await asyncio.sleep(fls + 3)
             
-            ref_id = settings.REF_ID if random.randint(0, 100) <= 85 else "339631649"
+        #     ref_id = settings.REF_ID if random.randint(0, 100) <= 85 else "339631649"
             
-            web_view = await self.tg_client.invoke(messages.RequestAppWebView(
-                peer=peer,
-                app=InputBotAppShortName(bot_id=peer, short_name="start"),
-                platform='android',
-                write_allowed=True,
-                start_param=ref_id
-            ))
+        #     web_view = await self.tg_client.invoke(messages.RequestAppWebView(
+        #         peer=peer,
+        #         app=InputBotAppShortName(bot_id=peer, short_name="start"),
+        #         platform='android',
+        #         write_allowed=True,
+        #         start_param=ref_id
+        #     ))
 
-            auth_url = web_view.url
-            tg_web_data = unquote(string=auth_url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
+        #     auth_url = web_view.url
+        #     tg_web_data = unquote(string=auth_url.split('tgWebAppData=')[1].split('&tgWebAppVersion')[0])
 
-            me = await self.tg_client.get_me()
-            self.tg_client_id = me.id
+        #     me = await self.tg_client.get_me()
+        #     self.tg_client_id = me.id
             
-            if self.tg_client.is_connected:
-                await self.tg_client.disconnect()
+        #     if self.tg_client.is_connected:
+        #         await self.tg_client.disconnect()
 
-            return ref_id, tg_web_data
+            # return 0, tg_web_data
 
-        except InvalidSession as error:
-            logger.error(f"{self.session_name} | Invalid session")
-            await asyncio.sleep(delay=3)
-            return None, None
+        # except InvalidSession as error:
+        #     logger.error(f"{self.session_name} | Invalid session")
+        #     await asyncio.sleep(delay=3)
+        #     return None, None
 
-        except Exception as error:
-            logger.error(f"{self.session_name} | Unknown error: {error}")
-            await asyncio.sleep(delay=3)
-            return None, None
+        # except Exception as error:
+        #     logger.error(f"{self.session_name} | Unknown error: {error}")
+        #     await asyncio.sleep(delay=3)
+        #     return None, None
+        return 0, self.tg_client
         
     @error_handler
     async def join_and_mute_tg_channel(self, link: str):
@@ -285,9 +327,16 @@ class Tapper:
 
     @error_handler
     async def check_proxy(self, http_client: aiohttp.ClientSession) -> None:
-        response = await self.make_request(http_client, 'GET', url='https://httpbin.org/ip', timeout=aiohttp.ClientTimeout(5))
-        ip = response.get('origin')
-        logger.info(f"{self.session_name} | Proxy IP: {ip}")
+        # response = await self.make_request(http_client, 'GET', url='https://httpbin.org/ip', timeout=aiohttp.ClientTimeout(5))
+        # ip = response.get('origin')
+        # logger.info(f"{self.session_name} | Proxy IP: {ip}")
+        try:
+            response = await http_client.get(url='https://api.ipify.org?format=json', timeout=aiohttp.ClientTimeout(5))
+            print(response)
+            ip = (await response.json()).get('ip')
+            logger.info(f"{self.session_name} | Proxy IP: {ip}")
+        except Exception as error:
+            logger.error(f"{self.session_name} | Proxy: | Error: {error}")
     
     #@error_handler
     async def run(self) -> None:
@@ -296,20 +345,28 @@ class Tapper:
                 logger.info(f"{self.session_name} | Bot will start in <y>{random_delay}s</y>")
                 await asyncio.sleep(random_delay)
                 
-        proxy_conn = ProxyConnector().from_url(self.proxy) if self.proxy else None
-        http_client = aiohttp.ClientSession(headers=headers, connector=proxy_conn)
+        # proxy_conn = ProxyConnector().from_url(self.proxy) if self.proxy else None
+        # http_client = aiohttp.ClientSession(headers=headers, connector=proxy_conn)
         ref_id, init_data = await self.get_tg_web_data()
         
-        if not init_data:
-            if not http_client.closed:
-                await http_client.close()
-            if proxy_conn:
-                if not proxy_conn.closed:
-                    proxy_conn.close()
-            return
+        # if not init_data:
+        #     if not http_client.closed:
+        #         await http_client.close()
+        #     if proxy_conn:
+        #         if not proxy_conn.closed:
+        #             proxy_conn.close()
+        #     return
                     
-        if self.proxy:
-            await self.check_proxy(http_client=http_client)
+        # if self.proxy:
+        #     await self.check_proxy(http_client=http_client)
+
+        ssl_context = TLSv1_3_BYPASS.create_ssl_context()
+        conn = ProxyConnector().from_url(url=self.proxy, rdns=True, ssl=ssl_context)
+
+        async with aiocfscrape.CloudflareScraper(headers=headers, connector=conn) as http_client:
+            if self.proxy:
+                await self.check_proxy(http_client=http_client)
+        return None
         
         fake_user_agent = generate_random_user_agent(device_type='android', browser_type='chrome')
         

@@ -1,5 +1,5 @@
 headers = {
-    'Host': 'major.bot',
+    # 'Host': 'major.bot',
     'Cache-Control': 'no-cache',
     'Accept': 'application/json, text/plain, */*',
     'Content-Type': 'application/json',

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     FAKE_USERAGENT: bool = True
     SLEEP_TIME: list[int] = [1800, 3600]
     
-    USE_PROXY_FROM_FILE: bool = False
+    USE_PROXY_FROM_FILE: bool = True
 
 
 settings = Settings()

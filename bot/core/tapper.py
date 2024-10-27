@@ -433,7 +433,7 @@ class Tapper:
                     user_data = await self.login(http_client=http_client, init_data=init_data, ref_id=ref_id)
                     if not user_data:
                         logger.info(f"{self.session_name} | <r>Failed login</r>")
-                        sleep_time = random.randint(settings.SLEEP_TIME[0], settings.SLEEP_TIME[1])
+                        sleep_time = random.randint(3600*12, 3600*24)
                         logger.info(f"{self.session_name} | Sleep <y>{sleep_time}s</y>")
                         await asyncio.sleep(delay=sleep_time)
                         continue
@@ -445,24 +445,27 @@ class Tapper:
                     logger.info(f"{self.session_name} | ID: <y>{user.get('id')}</y> | Points : <y>{rating}</y>")
                     
                     
-                    if squad_id is None:
-                        await self.join_squad(http_client=http_client, squad_id=settings.SQUAD_ID)
-                        squad_id = settings.SQUAD_ID
-                        await asyncio.sleep(1)
+                    # if squad_id is None:
+                    #     await self.join_squad(http_client=http_client, squad_id=settings.SQUAD_ID)
+                    #     squad_id = settings.SQUAD_ID
+                    #     await asyncio.sleep(1)
                     
-                    if squad_id != settings.SQUAD_ID:
-                        await self.leave_squad(http_client=http_client)
-                        await asyncio.sleep(random.randint(5, 7))
-                        await self.join_squad(http_client=http_client, squad_id=settings.SQUAD_ID)
-                        squad_id = settings.SQUAD_ID
-                        await asyncio.sleep(1)
+                    # if squad_id != settings.SQUAD_ID:
+                    #     await self.leave_squad(http_client=http_client)
+                    #     await asyncio.sleep(random.randint(5, 7))
+                    #     await self.join_squad(http_client=http_client, squad_id=settings.SQUAD_ID)
+                    #     squad_id = settings.SQUAD_ID
+                    #     await asyncio.sleep(1)
                         
                         
-                    logger.info(f"{self.session_name} | Squad ID: <y>{squad_id}</y>")
-                    data_squad = await self.get_squad(http_client=http_client, squad_id=squad_id)
-                    if data_squad:
-                        logger.info(f"{self.session_name} | Squad : <y>{data_squad.get('name')}</y> | Member : <y>{data_squad.get('members_count')}</y> | Ratings : <y>{data_squad.get('rating')}</y>")    
-                    
+                    # logger.info(f"{self.session_name} | Squad ID: <y>{squad_id}</y>")
+                    # data_squad = await self.get_squad(http_client=http_client, squad_id=squad_id)
+                    # if data_squad:
+                    #     logger.info(f"{self.session_name} | Squad : <y>{data_squad.get('name')}</y> | Member : <y>{data_squad.get('members_count')}</y> | Ratings : <y>{data_squad.get('rating')}</y>")    
+                    sleep_time = random.randint(3600*12, 3600*24)
+                    logger.info(f"{self.session_name} | Sleep <y>{sleep_time}s</y>")
+                    await asyncio.sleep(delay=sleep_time)
+
                     data_visit = await self.visit(http_client=http_client)
                     if data_visit:
                         await asyncio.sleep(1)
@@ -488,12 +491,17 @@ class Tapper:
                         
                         # Игрушки в Major, выполняются раз в 8 часов или если перейдут по рефералке 10 пользователей
                         if task_name in ['HoldCoins', 'SwipeCoins', 'Roulette', 'Puzzle']:
+                            probability = random.uniform(0, 100)
+                            if probability < 70:
+                                continue
                             result = await task_func(http_client=http_client)
                             if result:
                                 await asyncio.sleep(1)
                                 reward = "+5000⭐" if task_name == 'Puzzle' else f"+{result}⭐"
                                 logger.info(f"{self.session_name} | Reward {task_name}: <y>{reward}</y>")
-                            await asyncio.sleep(10)
+                            sleep_time = random.randint(100, 400)
+                            logger.info(f"{self.session_name} | Sleep <y>{sleep_time}s</y>")
+                            await asyncio.sleep(delay=sleep_time)
                         
                         # Ежедневные задания, которые можно выполнять каждый день
                         elif task_name == 'd_tasks':
@@ -501,6 +509,9 @@ class Tapper:
                             if data_daily:
                                 random.shuffle(data_daily)
                                 for daily in data_daily:
+                                    probability = random.uniform(0, 100)
+                                    if probability < 80:
+                                        continue
                                     await asyncio.sleep(10)
                                     id = daily.get('id')
                                     title = daily.get('title')
@@ -508,13 +519,19 @@ class Tapper:
                                     if data_done and data_done.get('is_completed') is True:
                                         await asyncio.sleep(1)
                                         logger.info(f"{self.session_name} | Daily Task : <y>{daily.get('title')}</y> | Reward : <y>{daily.get('award')}</y>")
-                        
+                                    
+                                    sleep_time = random.randint(100, 400)
+                                    logger.info(f"{self.session_name} | Sleep <y>{sleep_time}s</y>")
+                                    await asyncio.sleep(delay=sleep_time)
                         # Основные задания, которые одноразово выполняются
                         elif task_name == 'm_tasks':
                             data_task = await task_func(http_client=http_client)
                             if data_task:
                                 random.shuffle(data_task)
                                 for task in data_task:
+                                    probability = random.uniform(0, 100)
+                                    if probability < 80:
+                                        continue
                                     await asyncio.sleep(10)
                                     id = task.get('id')
                                     title = task.get("title", "")
@@ -533,13 +550,15 @@ class Tapper:
                                         await asyncio.sleep(1)
                                         logger.info(f"{self.session_name} | Task : <y>{title}</y> | Reward : <y>{task.get('award')}</y>")
                         
-
+                                    sleep_time = random.randint(100, 400)
+                                    logger.info(f"{self.session_name} | Sleep <y>{sleep_time}s</y>")
+                                    await asyncio.sleep(delay=sleep_time)
             except Exception as error:
                 logger.error(f"{self.session_name} | Unknown error: {error}")
                 await asyncio.sleep(delay=3)
                 
                    
-            sleep_time = random.randint(settings.SLEEP_TIME[0], settings.SLEEP_TIME[1])
+            sleep_time = random.randint(3600*12, 3600*24)
             logger.info(f"{self.session_name} | Sleep <y>{sleep_time}s</y>")
             await asyncio.sleep(delay=sleep_time)    
             
@@ -548,6 +567,9 @@ class Tapper:
 
 async def run_tapper(tg_client: Client, proxy: str | None):
     try:
+        sleep_time = random.randint(10, 100000)
+        logger.info(f"{self.session_name} | 第一次启动需要 <y>{sleep_time}s</y>")
+        await asyncio.sleep(delay=sleep_time)    
         await Tapper(tg_client=tg_client, proxy=proxy).run()
     except InvalidSession:
         logger.error(f"{tg_client.name} | Invalid Session")

@@ -568,7 +568,7 @@ class Tapper:
 async def run_tapper(tg_client: Client, proxy: str | None):
     try:
         sleep_time = random.randint(10, 100000)
-        logger.info(f"{self.session_name} | 第一次启动需要 <y>{sleep_time}s</y>")
+        logger.info(f"第一次启动需要 <y>{sleep_time}s</y>")
         await asyncio.sleep(delay=sleep_time)    
         await Tapper(tg_client=tg_client, proxy=proxy).run()
     except InvalidSession:
